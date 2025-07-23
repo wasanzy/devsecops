@@ -27,9 +27,11 @@ sysctl -p
 
 # --- Phase 3: User & Authentication Hardening ---
 echo "[*] Enforcing password and user policy..."
-USERNAME="youruser"
-chage --maxdays 90 --mindays 10 --warndays 7 "$USERNAME"
-passwd -l "$USERNAME"
+# Apply password aging policies to all human users (UID >= 1000 and not 'nobody')
+for USERNAME in $(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd); do
+  echo "Setting password aging for $USERNAME"
+  chage --maxdays 90 --mindays 10 --warndays 7 "$USERNAME"
+done
 awk -F: '($3 == 0) {print}' /etc/passwd
 sed -i 's/^UMASK.*/UMASK 027/' /etc/login.defs
 echo 'Defaults logfile="/var/log/sudo.log"' >> /etc/sudoers
@@ -102,9 +104,12 @@ host    all             all             127.0.0.1/32            md5
 hostssl all             all             ::1/128                 md5
 EOF
 systemctl restart postgresql
-sudo -u postgres psql -c "CREATE USER secure_user WITH PASSWORD 'StrongPasswordHere';"
+echo " Run the following commands to create user and password....."
+echo '
+sudo -u postgres psql -c "CREATE USER secure_user WITH PASSWORD '\''StrongPasswordHere'\'';"
 sudo -u postgres psql -c "ALTER ROLE secure_user SET client_min_messages TO WARNING;"
 sudo -u postgres psql -c "REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;"
+'
 
 # --- Phase 8: Vulnerability Scanning with Lynis ---
 echo "[*] Installing and running Lynis..."
