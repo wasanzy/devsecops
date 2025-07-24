@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+#Author: Emmanuel Seyram Buamah
+#(c) 2025
+
 set -euo pipefail
 echo "[+] Starting full system hardening for Ubuntu 20.04..."
 
