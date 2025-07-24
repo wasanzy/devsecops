@@ -79,15 +79,28 @@ EOF
 echo "[*] Setting up iptables firewall rules..."
 iptables -F
 iptables -X
+#Set defaults (deny all incomming connections)
 iptables -P INPUT DROP
+#Set defaults (deny all routing connection through this system)
 iptables -P FORWARD DROP
+#Allow all outbound traffic
 iptables -P OUTPUT ACCEPT
+#Allow all traffic on the local host (loopback interface)
 iptables -A INPUT -i lo -j ACCEPT
+#Allow ssh connection from anywhere
 iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Allow htt/https
 iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp -m multiport --sports 80,443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Allow DNS 
+iptables -A INPUT -p tcp -m multiport --dports 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp -m multiport --sports 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+iptables -A INPUT -p udp -m multiport --dports 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p udp -m multiport --sports 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Log all traffics
 iptables -A INPUT -j LOG --log-prefix "iptables-dropped: " --log-level 4
+#Save the rules so they do not disappear when the server restarts
 apt install -y iptables-persistent
 netfilter-persistent save
 
@@ -139,7 +152,7 @@ ssl_prefer_server_ciphers on;
 add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
 limit_req_zone \$binary_remote_addr zone=req_limit_per_ip:10m rate=1r/s;
-client_max_body_size 1M;
+client_max_body_size 1M;sudo
 
 access_log /var/log/nginx/access.log;
 error_log /var/log/nginx/error.log warn;
