@@ -93,11 +93,12 @@ iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEP
 #Allow htt/https
 iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp -m multiport --sports 80,443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-#Allow DNS 
-iptables -A INPUT -p tcp -m multiport --dports 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -p tcp -m multiport --sports 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-iptables -A INPUT -p udp -m multiport --dports 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -p udp -m multiport --sports 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Allow DNS tcp
+iptables -A OUTPUT -p tcp --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --sport 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#Allow DNS udp
+iptables -A OUTPUT -p udp --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p udp --sport 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 #Log all traffics
 iptables -A INPUT -j LOG --log-prefix "iptables-dropped: " --log-level 4
 #Save the rules so they do not disappear when the server restarts
