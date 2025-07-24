@@ -237,21 +237,22 @@ sed -i "/server {/a \\    include snippets/security-headers.conf;" "$DEFAULT_SIT
 nginx -t && systemctl reload nginx
 
 #------------------------------
-# Install and harden PostgreSQL
+# Harden PostgreSQL configuration
 #------------------------------
-echo "[*] Installing and hardening PostgreSQL..."
-install_if_missing postgresql
-install_if_missing postgresql-contrib
-
-# Detect the installed PostgreSQL version dynamically
-PG_VERSION=$(psql -V | awk '{print $3}' | cut -d. -f1,2)
+PG_VERSION=$(psql -V | awk '{print $3}' | cut -d. -f1)
 PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
 HBA_CONF="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 
-# Harden PostgreSQL settings
-sed -i "s/#password_encryption =.*/password_encryption = scram-sha-256/" "$PG_CONF"
-sed -i "s/^local\s\+all\s\+all\s\+.*/local   all     all      scram-sha-256/" "$HBA_CONF"
-systemctl restart postgresql
+# Only modify if config files exist
+if [[ -f "$PG_CONF" && -f "$HBA_CONF" ]]; then
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = 'localhost'/g" "$PG_CONF"
+    sed -i "s/^host.*all.*all.*127.0.0.1\/32.*md5/host all all 127.0.0.1\/32 scram-sha-256/" "$HBA_CONF"
+    sed -i "s/^host.*all.*all.*::1\/128.*md5/host all all ::1\/128 scram-sha-256/" "$HBA_CONF"
+    systemctl restart postgresql
+else
+    echo "PostgreSQL config files not found for version $PG_VERSION"
+fi
+
 
 
 #------------------------------
