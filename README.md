@@ -85,25 +85,26 @@ This script prepares the system as a **security-hardened CI/CD runner host**. Be
 
 ## Post-Hardening Validation
 
-    ## Lynis Audit Report
+## 1. Lynis Audit Report
     sudo lynis audit system --quiet --auditor "DevSecOps Officer" --report-file /var/www/html/system_scan.html
 
     Open /var/www/html/system_scan.html in your browser to view full security scan results.
 
-    ## Check Logs
+## 2. Check Logs
     Auditd: /var/log/audit/audit.log
 
     Fail2Ban: /var/log/fail2ban.log
 
     Authentication: /var/log/auth.log
 
-    iptables: journalctl -xe | grep IPTables
+    iptables: journalctl -xe | grep iptables
 
-    # Simulate Failed Logins
+## 3.Simulate Failed Logins
+
     ssh wronguser@localhost
     # Check if Fail2Ban triggers after several failed attempts
 
-    #Check Firewall Rules
+## 4. Check Firewall Rules
     sudo iptables -L -v
 ---
 
