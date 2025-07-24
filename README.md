@@ -71,15 +71,17 @@ This script prepares the system as a **security-hardened CI/CD runner host**. Be
 ## How to Use
 
 ### 1. Clone Repository
-```bash
-git clone https://github.com/yourusername/ubuntu-hardening.git
-cd ubuntu-hardening
+    ```bash
+    git clone https://github.com/yourusername/ubuntu-hardening.git
+    cd ubuntu-hardening
 
-## Make Script Executable
-chmod +x harden.sh
+## 2. Make Script Executable
+    chmod +x harden.sh
 
-## Run the Script (as root)
-sudo ./harden.sh
+## 3. Run the Script (as root)
+    sudo ./harden.sh
+
+--- 
 
 ## Post-Hardening Validation
 
@@ -103,5 +105,6 @@ sudo ./harden.sh
 
     #Check Firewall Rules
     sudo iptables -L -v
+---
 
 (c) 2025 Emmanuel Seyram Buamah
