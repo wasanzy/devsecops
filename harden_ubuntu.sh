@@ -121,18 +121,33 @@ netfilter-persistent save
 
 # --- Phase 7: PostgreSQL Hardening ---
 echo "[*] Installing and hardening PostgreSQL..."
-apt install -y postgresql postgresql-contrib
-PG_CONF="/etc/postgresql/14/main/postgresql.conf"
-HBA_CONF="/etc/postgresql/14/main/pg_hba.conf"
+apt update && apt install -y postgresql postgresql-contrib
+
+# Detect the installed PostgreSQL version dynamically
+PG_VERSION=$(psql -V | awk '{print $3}' | cut -d. -f1)
+
+# Use detected version to build config paths
+PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
+HBA_CONF="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
+
+# Harden postgresql.conf
 sed -i "s/^#*listen_addresses.*/listen_addresses = 'localhost'/" "$PG_CONF"
-echo "ssl = on" >> "$PG_CONF"
+grep -q "^ssl *= *on" "$PG_CONF" || echo "ssl = on" >> "$PG_CONF"
+
+# Harden pg_hba.conf
 cat > "$HBA_CONF" <<EOF
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   all             all                                     peer
 host    all             all             127.0.0.1/32            md5
 hostssl all             all             ::1/128                 md5
 EOF
+
+# Restart PostgreSQL to apply changes
 systemctl restart postgresql
-echo " Run the following commands to create user and password....."
+
+# Display next steps
+echo "✅ PostgreSQL $PG_VERSION installed and hardened."
+echo "🔐 Run the following commands to create user and secure the environment:"
 echo '
 sudo -u postgres psql -c "CREATE USER secure_user WITH PASSWORD '\''StrongPasswordHere'\'';"
 sudo -u postgres psql -c "ALTER ROLE secure_user SET client_min_messages TO WARNING;"
