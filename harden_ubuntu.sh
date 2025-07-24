@@ -83,31 +83,38 @@ EOF
 echo "[*] Setting up iptables firewall rules..."
 iptables -F
 iptables -X
-#Set defaults (deny all incomming connections)
 iptables -P INPUT DROP
-#Set defaults (deny all routing connection through this system)
 iptables -P FORWARD DROP
-#Allow all outbound traffic
 iptables -P OUTPUT ACCEPT
-#Allow all traffic on the local host (loopback interface)
-iptables -A INPUT -i lo -j ACCEPT
-#Allow ssh connection from anywhere
-iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-#Allow htt/https
-iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -p tcp -m multiport --sports 80,443 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
-# Allow outbound DNS requests (UDP)
+# Allow loopback
+iptables -A INPUT -i lo -j ACCEPT
+
+# Allow established and related incoming connections (CRUCIAL!)
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Allow ICMP (ping)
+iptables -A INPUT -p icmp -m conntrack --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# Allow DHCP response if needed
+iptables -A INPUT -p udp --sport 67 --dport 68 -j ACCEPT
+
+# Allow SSH
+iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+# Allow HTTP/HTTPS
+iptables -A INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+# Allow DNS (UDP and TCP)
 iptables -A OUTPUT -p udp --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A INPUT  -p udp --sport 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
-# Allow outbound DNS requests (TCP fallback)
 iptables -A OUTPUT -p tcp --dport 53 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A INPUT  -p tcp --sport 53 -m conntrack --ctstate ESTABLISHED -j ACCEPT
 
-#Log all traffics
+# Log other dropped packets
 iptables -A INPUT -j LOG --log-prefix "iptables-dropped: " --log-level 4
+
 #Save the rules so they do not disappear when the server restarts
 apt install -y iptables-persistent
 netfilter-persistent save
