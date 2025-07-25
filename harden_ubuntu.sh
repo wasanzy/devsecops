@@ -35,7 +35,7 @@ install_if_missing ca-certificates
 install_if_missing lsb-release
 install_if_missing software-properties-common
 install_if_missing net-tools
-install_if_missing ssh
+install_if_missing openssh-server
 
 #------------------------------
 # Configure automatic security updates
